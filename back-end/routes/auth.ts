@@ -1,5 +1,6 @@
 import { Router } from "oak";
-import { create, verify } from "https://deno.land/x/djwt@v3.0.2/mod.ts";
+import { create } from "djwt";
+import { query } from "../db/connection.ts";
 
 const router = new Router();
 
@@ -10,8 +11,15 @@ const JWT_SECRET = await crypto.subtle.generateKey(
   ["sign", "verify"]
 );
 
-// Temporary in-memory user storage (replace with database)
-const users = new Map<string, { id: string; nome: string; cognome: string; email: string; password: string }>();
+// Interface per il tipo User dal database
+interface User {
+  id: string;
+  nome: string;
+  cognome: string;
+  email: string;
+  password: string;
+  created_at: Date;
+}
 
 // POST /api/auth/register
 router.post("/register", async (ctx) => {
@@ -26,25 +34,27 @@ router.post("/register", async (ctx) => {
       return;
     }
 
-    // Check if user exists
-    if (users.has(email)) {
+    // Check if user exists in database
+    const existingUsers = await query<User>(
+      "SELECT id FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (existingUsers.length > 0) {
       ctx.response.status = 409;
       ctx.response.body = { error: "Email già registrata" };
       return;
     }
 
-    // Hash password (in production, use bcrypt or similar)
+    // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Create user
+    // Create user in database
     const userId = crypto.randomUUID();
-    users.set(email, {
-      id: userId,
-      nome,
-      cognome,
-      email,
-      password: hashedPassword,
-    });
+    await query(
+      "INSERT INTO users (id, nome, cognome, email, password) VALUES ($1, $2, $3, $4, $5)",
+      [userId, nome, cognome, email, hashedPassword]
+    );
 
     // Generate JWT
     const token = await create(
@@ -79,13 +89,19 @@ router.post("/login", async (ctx) => {
       return;
     }
 
-    // Find user
-    const user = users.get(email);
-    if (!user) {
+    // Find user in database
+    const users = await query<User>(
+      "SELECT * FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (users.length === 0) {
       ctx.response.status = 401;
       ctx.response.body = { error: "Credenziali non valide" };
       return;
     }
+
+    const user = users[0];
 
     // Verify password
     const isValid = await verifyPassword(password, user.password);

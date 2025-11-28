@@ -1,9 +1,11 @@
 {
   "tasks": {
-    "dev": "deno run --allow-net --allow-env --allow-read --watch main.ts",
-    "start": "deno run --allow-net --allow-env --allow-read main.ts"
+    "dev": "deno run --allow-net --allow-env --allow-read --allow-sys --watch main.ts",
+    "start": "deno run --allow-net --allow-env --allow-read --allow-sys main.ts"
   },
   "imports": {
-    "oak": "jsr:@oak/oak@^17.1.3"
+    "oak": "jsr:@oak/oak@^17.1.3",
+    "postgres": "https://deno.land/x/postgres@v0.19.3/mod.ts",
+    "djwt": "https://deno.land/x/djwt@v3.0.2/mod.ts"
   }
 }

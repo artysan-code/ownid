@@ -1,9 +1,11 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { useAuth } from '../context/AuthContext';
 
 export default function Header() {
   const pathname = usePathname();
+  const { user } = useAuth();
 
   const isActive = (path: string) => pathname === path;
 
@@ -64,18 +66,29 @@ export default function Header() {
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
-          <a
-            href="/login"
-            className="px-4 py-2 text-sm text-gray-900 dark:text-gray-100 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
-          >
-            Accedi
-          </a>
-          <a
-            href="/registrati"
-            className="px-4 py-2 bg-violet-600 dark:bg-violet-700 text-white text-sm font-medium rounded-lg hover:bg-violet-700 dark:hover:bg-violet-600 transition-colors"
-          >
-            Registrati
-          </a>
+          {user ? (
+            <a
+              href="/dashboard"
+              className="px-4 py-2 bg-violet-600 dark:bg-violet-700 text-white text-sm font-medium rounded-lg hover:bg-violet-700 dark:hover:bg-violet-600 transition-colors"
+            >
+              Area Riservata
+            </a>
+          ) : (
+            <>
+              <a
+                href="/login"
+                className="px-4 py-2 text-sm text-gray-900 dark:text-gray-100 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+              >
+                Accedi
+              </a>
+              <a
+                href="/registrati"
+                className="px-4 py-2 bg-violet-600 dark:bg-violet-700 text-white text-sm font-medium rounded-lg hover:bg-violet-700 dark:hover:bg-violet-600 transition-colors"
+              >
+                Registrati
+              </a>
+            </>
+          )}
         </div>
       </div>
     </header>

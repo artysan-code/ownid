@@ -1,5 +1,6 @@
 import { Application } from "oak";
 import router from "./routes/index.ts";
+import { testConnection } from "./db/connection.ts";
 
 const app = new Application();
 const PORT = 8000;
@@ -33,6 +34,15 @@ app.use(router.allowedMethods());
 app.addEventListener("error", (evt) => {
   console.error("Server error:", evt.error);
 });
+
+// Test database connection before starting server
+console.log("🔌 Testing database connection...");
+const dbConnected = await testConnection();
+
+if (!dbConnected) {
+  console.error("❌ Failed to connect to database. Exiting...");
+  Deno.exit(1);
+}
 
 console.log(`🦕 OwnID Backend running on http://localhost:${PORT}`);
 await app.listen({ port: PORT });
