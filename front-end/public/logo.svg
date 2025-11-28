@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" shape-rendering="geometricPrecision">
+  <defs>
+    <mask id="ownid-cutout">
+      <!-- Base Mask: Reveal everything (White) -->
+      <rect width="512" height="512" fill="white"/>
+      
+      <!-- Negative Space: Hide these parts (Black) to create the circuit/keyhole -->
+      <!-- The Central "O" / Keyhole Head -->
+      <circle cx="256" cy="235" r="60" fill="black"/>
+      
+      <!-- The Keyhole Stem / Data Channel (Down) -->
+      <rect x="231" y="235" width="50" height="260" fill="black"/>
+      
+      <!-- Network Line (Top Left) -->
+      <line x1="256" y1="235" x2="65" y2="140" stroke="black" stroke-width="50" stroke-linecap="butt"/>
+      
+      <!-- Network Line (Top Right) -->
+      <line x1="256" y1="235" x2="447" y2="140" stroke="black" stroke-width="50" stroke-linecap="butt"/>
+      
+      <!-- Hub Nodes (Optional styling to smooth intersections) -->
+      <circle cx="256" cy="235" r="26" fill="black"/>
+    </mask>
+  </defs>
+
+  <!-- Primary Structure: Hexagonal Shield Block -->
+  <!-- Color: Violet #7C3AED -->
+  <path 
+    d="M256 46 L446.5 156 L446.5 376 L256 486 L65.5 376 L65.5 156 Z" 
+    fill="#7C3AED" 
+    mask="url(#ownid-cutout)"
+  />
+</svg>
