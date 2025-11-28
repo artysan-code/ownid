@@ -8,7 +8,7 @@ const router = new Router();
 router.get("/", (ctx) => {
   ctx.response.body = {
     status: "ok",
-    message: "OwnID API v1.0",
+    message: "OwnID API",
     timestamp: new Date().toISOString(),
   };
 });
