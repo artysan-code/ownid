@@ -1,6 +1,7 @@
 import { Application } from "oak";
 import router from "./routes/index.ts";
 import { testConnection } from "./db/connection.ts";
+import { testConnection as testBlockchainConnection } from "./services/blockchain.ts";
 
 const app = new Application();
 const PORT = 8000;
@@ -40,8 +41,19 @@ console.log("🔌 Testing database connection...");
 const dbConnected = await testConnection();
 
 if (!dbConnected) {
-  console.error("❌ Failed to connect to database. Exiting...");
-  Deno.exit(1);
+  console.warn("⚠️  Database connection failed. Auth features will be unavailable.");
+}
+
+// Test blockchain connection
+console.log("⛓️  Testing blockchain connection...");
+const blockchainStatus = await testBlockchainConnection();
+
+if (blockchainStatus.connected) {
+  console.log(`✅ Blockchain connected - Block: ${blockchainStatus.blockNumber}`);
+  console.log(`   Contract: ${blockchainStatus.contractAddress}`);
+} else {
+  console.warn(`⚠️  Blockchain connection failed: ${blockchainStatus.error}`);
+  console.warn(`   API will work but blockchain features will be unavailable`);
 }
 
 console.log(`🦕 OwnID Backend running on http://localhost:${PORT}`);
