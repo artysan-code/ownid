@@ -1,1 +1,0 @@
-Allora ha fatto il piano, però analizziamolo bene e facciamo le implemenetazioni piano piano, molti commit così se ci sono step corretti allora li teniamo, appena c'è un errore torniamo indietro.

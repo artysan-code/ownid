@@ -1,7 +1,5 @@
-// Servizio per interagire con il contratto PublicBadgeNetwork
 import { Contract, JsonRpcProvider, Wallet } from "npm:ethers@6.13.0";
 
-// Importa l'ABI del contratto
 const ABI = [
   "function registerAsEntity(string memory _name) external",
   "function issueBadge(address _student, string memory _title, string memory _spec, uint256 _daysValid, string memory _privateData) external",
@@ -15,39 +13,57 @@ const ABI = [
   "event BadgeIssued(uint256 indexed badgeId, uint256 indexed entityId, address recipient)",
 ];
 
-// Configurazione blockchain
 const RPC_URL = Deno.env.get("BLOCKCHAIN_RPC_URL") || "http://localhost:8545";
 const CONTRACT_ADDRESS = Deno.env.get("CONTRACT_ADDRESS") || "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 const PRIVATE_KEY = Deno.env.get("BLOCKCHAIN_PRIVATE_KEY");
 
-// Provider e wallet
-const provider = new JsonRpcProvider(RPC_URL);
+let provider: JsonRpcProvider | null = null;
 let wallet: Wallet | null = null;
 let contract: Contract | null = null;
 let contractReadOnly: Contract | null = null;
 
-// Inizializza il wallet solo se abbiamo una chiave privata
-if (PRIVATE_KEY) {
-  wallet = new Wallet(PRIVATE_KEY, provider);
-  contract = new Contract(CONTRACT_ADDRESS, ABI, wallet);
+/**
+ * Get provider instance (lazy initialization)
+ */
+export function getProvider(): JsonRpcProvider {
+  if (!provider) {
+    provider = new JsonRpcProvider(RPC_URL);
+  }
+  return provider;
 }
 
-// Contratto read-only (senza wallet)
-contractReadOnly = new Contract(CONTRACT_ADDRESS, ABI, provider);
+/**
+ * Get read-only contract instance (lazy initialization)
+ */
+export function getContractReadOnly(): Contract {
+  if (!contractReadOnly) {
+    contractReadOnly = new Contract(CONTRACT_ADDRESS, ABI, getProvider());
+  }
+  return contractReadOnly;
+}
 
 /**
- * Registra un ente che può emettere badge
+ * Get contract instance with wallet (lazy initialization)
+ */
+export function getContract(): Contract {
+  if (!contract) {
+    if (!PRIVATE_KEY) {
+      throw new Error("Private key not configured");
+    }
+    wallet = new Wallet(PRIVATE_KEY, getProvider());
+    contract = new Contract(CONTRACT_ADDRESS, ABI, wallet);
+  }
+  return contract;
+}
+
+/**
+ * Register entity on-chain
  */
 export async function registerEntity(name: string, entityWallet: Wallet) {
-  if (!contract && !entityWallet) {
-    throw new Error("Wallet non configurato per le transazioni");
-  }
-
   const entityContract = new Contract(CONTRACT_ADDRESS, ABI, entityWallet);
   const tx = await entityContract.registerAsEntity(name);
   const receipt = await tx.wait();
 
-  // Estrai l'entityId dall'evento
   const event = receipt?.logs
     .map((log: any) => {
       try {
@@ -66,7 +82,7 @@ export async function registerEntity(name: string, entityWallet: Wallet) {
 }
 
 /**
- * Emetti un badge per uno studente
+ * Issue badge on-chain
  */
 export async function issueBadge(
   studentAddress: string,
@@ -78,11 +94,7 @@ export async function issueBadge(
 ) {
   const activeContract = entityWallet
     ? new Contract(CONTRACT_ADDRESS, ABI, entityWallet)
-    : contract;
-
-  if (!activeContract) {
-    throw new Error("Wallet non configurato");
-  }
+    : getContract();
 
   const tx = await activeContract.issueBadge(
     studentAddress,
@@ -93,7 +105,6 @@ export async function issueBadge(
   );
   const receipt = await tx.wait();
 
-  // Estrai il badgeId dall'evento
   const event = receipt?.logs
     .map((log: any) => {
       try {
@@ -113,15 +124,12 @@ export async function issueBadge(
 }
 
 /**
- * Ottieni informazioni su un badge
+ * Get badge information
  */
 export async function getBadgeInfo(badgeId: number) {
-  if (!contractReadOnly) {
-    throw new Error("Contratto non inizializzato");
-  }
-
+  const contract = getContractReadOnly();
   const [issuerName, title, specialization, status, date] =
-    await contractReadOnly.getBadgeInfo(badgeId);
+    await contract.getBadgeInfo(badgeId);
 
   return {
     badgeId,
@@ -133,76 +141,44 @@ export async function getBadgeInfo(badgeId: number) {
   };
 }
 
-/**
- * Verifica i dati privati di un badge
- */
 export async function verifyPrivateData(badgeId: number, dataToCheck: string): Promise<boolean> {
-  if (!contractReadOnly) {
-    throw new Error("Contratto non inizializzato");
-  }
-
-  return await contractReadOnly.verifyPrivateData(badgeId, dataToCheck);
+  const contract = getContractReadOnly();
+  return await contract.verifyPrivateData(badgeId, dataToCheck);
 }
 
-/**
- * Ottieni l'entityId di un wallet
- */
 export async function getEntityId(walletAddress: string): Promise<number> {
-  if (!contractReadOnly) {
-    throw new Error("Contratto non inizializzato");
-  }
-
-  const entityId = await contractReadOnly.walletToEntityId(walletAddress);
+  const contract = getContractReadOnly();
+  const entityId = await contract.walletToEntityId(walletAddress);
   return Number(entityId);
 }
 
-/**
- * Ottieni informazioni su un ente
- */
 export async function getEntityInfo(entityId: number) {
-  if (!contractReadOnly) {
-    throw new Error("Contratto non inizializzato");
-  }
-
-  const [name, wallet] = await contractReadOnly.entities(entityId);
+  const contract = getContractReadOnly();
+  const [name, wallet] = await contract.entities(entityId);
   return { entityId, name, wallet };
 }
 
-/**
- * Ottieni il proprietario di un badge
- */
 export async function getBadgeOwner(badgeId: number): Promise<string> {
-  if (!contractReadOnly) {
-    throw new Error("Contratto non inizializzato");
-  }
-
-  return await contractReadOnly.ownerOf(badgeId);
+  const contract = getContractReadOnly();
+  return await contract.ownerOf(badgeId);
 }
 
-/**
- * Ottieni il numero di badge posseduti da un indirizzo
- */
 export async function getUserBadgeCount(address: string): Promise<number> {
-  if (!contractReadOnly) {
-    throw new Error("Contratto non inizializzato");
-  }
-
-  const balance = await contractReadOnly.balanceOf(address);
+  const contract = getContractReadOnly();
+  const balance = await contract.balanceOf(address);
   return Number(balance);
 }
 
-/**
- * Crea un wallet da una chiave privata
- */
 export function createWallet(privateKey: string): Wallet {
-  return new Wallet(privateKey, provider);
+  return new Wallet(privateKey, getProvider());
 }
 
 /**
- * Test di connessione
+ * Test blockchain connection
  */
 export async function testConnection() {
   try {
+    const provider = getProvider();
     const blockNumber = await provider.getBlockNumber();
     return {
       connected: true,

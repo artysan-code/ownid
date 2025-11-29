@@ -6,6 +6,7 @@
   "imports": {
     "oak": "jsr:@oak/oak@^17.1.3",
     "postgres": "https://deno.land/x/postgres@v0.19.3/mod.ts",
-    "djwt": "https://deno.land/x/djwt@v3.0.2/mod.ts"
+    "djwt": "https://deno.land/x/djwt@v3.0.2/mod.ts",
+    "ethers": "npm:ethers@^6.13.0"
   }
 }

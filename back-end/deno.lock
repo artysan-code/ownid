@@ -15,6 +15,7 @@
     "jsr:@std/media-types@1": "1.1.0",
     "jsr:@std/path@1": "1.1.3",
     "npm:ethers@6.13.0": "6.13.0",
+    "npm:ethers@^6.13.0": "6.13.0",
     "npm:path-to-regexp@6.2.1": "6.2.1",
     "npm:path-to-regexp@^6.3.0": "6.3.0"
   },
@@ -285,7 +286,8 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@oak/oak@^17.1.3"
+      "jsr:@oak/oak@^17.1.3",
+      "npm:ethers@^6.13.0"
     ]
   }
 }
